@@ -1,0 +1,6 @@
+{
+  "name": "CricSentinel",
+  "description": "AI-powered stadium operations command center for real-time crowd monitoring, incident management, and match phase operations during the IPL 2026 Finale at Narendra Modi Stadium.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
