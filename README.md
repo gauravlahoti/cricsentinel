@@ -1,330 +1,191 @@
 <div align="center">
 
-# 🏏 CricSentinel
+# CricSentinel
 
 ### AI-Powered Stadium Operations Command Center
 
-**Real-time crowd intelligence, incident management, and AI-guided decision support for large-scale cricket events**
+**Real-time crowd intelligence · Incident management · AI-guided decision support**
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Google ADK](https://img.shields.io/badge/Google_ADK-1.26-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
-[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash_(ADK)_·_3.5_Flash_(API)-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
+[![Google ADK](https://img.shields.io/badge/Google_ADK-1.33-4285F4?logo=google&logoColor=white)](https://google.github.io/adk-docs/)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev)
+[![Cloud Run](https://img.shields.io/badge/Cloud_Run-us--west1-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-*Built for the IPL 2026 Finale · Narendra Modi Stadium, Ahmedabad · 130,000 seats*
+*Built for the IPL 2026 Finale · Narendra Modi Stadium, Ahmedabad · 130,224 seats*
 
-**🌐 Live Demo → [cric-sentinel-593919045544.us-west1.run.app](https://cric-sentinel-593919045544.us-west1.run.app)**
+**Live Demo → [cric-sentinel-593919045544.us-west1.run.app](https://cric-sentinel-593919045544.us-west1.run.app)**
 
 </div>
 
 ---
 
-## ☁️ Google Cloud & AI Services
+## The Problem
 
-> This project is built entirely on Google Cloud infrastructure and Google AI APIs — a first-class GCP stack from model to deployment.
+130,000 fans. One stadium. Six gates. Current stadium operations rely on **fragmented, manual systems** — radios, spreadsheets, and gut instinct. When a crowd surge, security anomaly, or weather shift hits, ops teams have seconds to respond with no unified view.
 
-| Service | Role |
-|---|---|
-| **[Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/)** — `google-adk` | Primary AI agent framework. Powers the @Agent_Orb Python agent with multi-tool reasoning, session memory, and built-in Google Search grounding |
-| **[Google Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs)** — ADK agent model | Drives the ADK agent's reasoning, tool selection, and natural-language ops guidance |
-| **[Google Gemini 3.5 Flash](https://ai.google.dev/gemini-api/docs)** — `@google/genai` SDK | Direct API fallback layer — used when the ADK service is unreachable |
-| **[Google Stitch](https://stitch.withgoogle.com)** | AI-powered UI design tool used to generate the initial dashboard layout, component structure, and visual design system |
-| **[agents-cli](https://google.github.io/adk-docs/)** (`antigravity-cli`) | Google's CLI for scaffolding, running, and deploying ADK agents — used to bootstrap the `cricsentinel-orb` agent project and manage the agent development workflow |
-| **[Google Cloud Run](https://cloud.google.com/run)** | Serverless container hosting. Zero-config auto-scaling, HTTPS by default, deployed in `us-west1` |
-| **[Google Cloud Build](https://cloud.google.com/build)** | CI/CD pipeline. Builds the multi-stage Docker image and pushes to Artifact Registry on every deploy |
-| **[Google Artifact Registry](https://cloud.google.com/artifact-registry)** | Private Docker image registry (`us-west1`) storing versioned container images |
-| **[Google Secret Manager](https://cloud.google.com/secret-manager)** | Secure storage for `GEMINI_API_KEY` — injected at runtime via Cloud Run secret binding, never baked into the image |
-
----
-
-## 🤖 Google ADK Agent — @Agent_Orb
-
-@Agent_Orb is built on **[Google's Agent Development Kit (ADK)](https://google.github.io/adk-docs/)** — Google's open-source Python framework for building production-grade AI agents. The ADK handles multi-turn session memory, automatic tool selection, and structured tool call/response routing, so the agent can chain multiple tools in a single operator query.
-
-### Agent Architecture
-
-```
-cricsentinel-orb/
-└── app/
-    ├── agent.py      # ADK Agent definition — model, instruction, tools
-    ├── tools.py      # Three registered function tools
-    └── server.py     # FastAPI wrapper exposing POST /chat
-```
-
-The agent runs as a standalone Python microservice (port 8000). The Express server proxies requests to it; if unavailable, it falls through to direct Gemini API, then a procedural fallback — so the app is always live.
-
-### ADK Built-in Tools
-
-| Tool | Type | What it does |
-|---|---|---|
-| **`web_search`** | Custom `FunctionTool` (DuckDuckGo API) | Searches the web for IPL news, squad updates, and real-time context — no API key required |
-| **`get_weather_data`** | Custom `FunctionTool` | Fetches real-time weather for Ahmedabad via wttr.in (temp, humidity, wind, visibility) |
-| **`query_cricsentinel_db`** | Custom `FunctionTool` | Queries the CricSentinel historical operations database — gate patterns, incident history, capacity zones, egress benchmarks across IPL 2019–2025 |
-
-### `web_search` — Custom Function Tool
-
-`web_search` uses the DuckDuckGo Instant Answer API — no API key, free to call. When the operator asks about live IPL news, squad changes, or anything outside the local dataset, the agent automatically invokes this tool and returns the abstract, source URL, and related topics.
-
-```python
-from google.adk.tools import FunctionTool
-from app.tools import web_search
-
-root_agent = Agent(
-    name="cricsentinel_orb",
-    model="gemini-2.5-flash",
-    tools=[FunctionTool(func=web_search), ...],
-)
-```
-
-### CricSentinel Historical Database
-
-The `query_cricsentinel_db` tool exposes a structured dataset covering Narendra Modi Stadium operations history:
-
-| `query_type` | Data |
-|---|---|
-| `attendance_history` | IPL Finale crowd figures 2019–2025 with peak ingress phase notes |
-| `incident_history` | Security anomalies, bottlenecks, medical, weather holds — with resolutions |
-| `gate_patterns` | Per-gate fan/min throughput benchmarks by match phase (pre_match → done) |
-| `capacity_zones` | Gate-to-section mapping, max capacity per zone, medical station locations |
-| `egress_benchmarks` | Historical egress ETA by scenario (normal, super over, rain hold, emergency) |
-
-Supports `filters` parameter (e.g. `"phase:innings_break"`, `"year:2025"`) for targeted lookups.
-
-### 3-Tier Fallback Chain
-
-```
-Operator Query
-     │
-     ▼
-┌─────────────────────────────────┐
-│  1. ADK Python Agent (port 8000) │  ← gemini-2.5-flash + 3 tools
-│     google_search                │
-│     get_weather_data             │
-│     query_cricsentinel_db        │
-└──────────────┬──────────────────┘
-               │ (if unreachable)
-               ▼
-┌─────────────────────────────────┐
-│  2. Direct Gemini 3.5 Flash      │  ← @google/genai SDK
-│     generateContent()            │
-└──────────────┬──────────────────┘
-               │ (if API key missing)
-               ▼
-┌─────────────────────────────────┐
-│  3. Procedural Keyword Fallback  │  ← always works, no key needed
-└─────────────────────────────────┘
-```
-
----
-
-## What is CricSentinel?
-
-CricSentinel is a **stadium operations command center** that gives ops teams a single pane of glass for managing a packed cricket stadium. It combines real-time telemetry (attendance, gate throughput, egress ETA), anomaly detection (crowd surges, security alerts), and an embedded AI agent — **@Agent_Orb** — that answers operator queries, suggests decisions, and generates runbook steps on the fly.
-
-Think: mission control, but for a cricket finale with 130,000 fans.
-
-The initial UI design and component layout were prototyped with **[Google Stitch](https://stitch.withgoogle.com)**, Google's AI-powered design tool, before being implemented in React + Tailwind CSS v4. The ADK agent project was scaffolded and managed using **agents-cli** (`antigravity-cli`).
+**CricSentinel** collapses that fragmentation into a single AI-powered command layer — giving duty operators real-time situational awareness, proactive decision proposals, and an AI agent that reasons through incidents using live data and historical precedent.
 
 ---
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph Browser["🌐 Browser (React SPA)"]
-        direction TB
-        App["App.tsx\n(State Orchestrator)"]
-        
-        subgraph Panels["UI Panels"]
-            VS["VitalSigns\nAttendance · Throughput · ETA"]
-            SV["StadiumView\nMap · Anomaly Overlay"]
-            CL["CommsLog\nOps Communications Feed"]
-            AC["ActionCards\nAI Decision Recommendations"]
-            SEC["SecurityView\nCamera Anomalies"]
-            LOG["LogisticsView\nGate & Crowd Flow"]
-            GV["GuestsView\nVIP Guest Status"]
-            TC["TimelineController\nMatch Phase Scrubber"]
-        end
-        
-        AI["AIChatWidget\n(Floating AI Chat)"]
-        
-        App --> Panels
-        App --> AI
-    end
+Two independently deployed services on Google Cloud Run, connected through a resilient 3-tier fallback chain.
 
-    subgraph Server["⚙️ Express Server (Node.js · server.ts)"]
-        EP["POST /api/agent-respond"]
-        PROXY["ADK Proxy\ntryAdkAgent()"]
-        GEM_DIRECT["Gemini 3.5 Flash\n@google/genai SDK"]
-        FB["Procedural Fallback\nKeyword responses"]
-        EP --> PROXY
-        PROXY -->|"on failure"| GEM_DIRECT
-        GEM_DIRECT -->|"on failure"| FB
-    end
-
-    subgraph ADK["🐍 ADK Agent Service (Python · port 8000)"]
-        AGENT["@Agent_Orb\ngemini-2.5-flash"]
-        T1["google_search\n(ADK Built-in)"]
-        T2["get_weather_data\n(wttr.in)"]
-        T3["query_cricsentinel_db\n(Historical DB)"]
-        AGENT --> T1
-        AGENT --> T2
-        AGENT --> T3
-    end
-
-    subgraph GCP["☁️ Google Cloud"]
-        GEM["Gemini 3.5 Flash\n@google/genai SDK"]
-        GSEARCH["Google Search\nGrounding API"]
-    end
-
-    AI -->|"POST /api/agent-respond"| EP
-    PROXY -->|"POST /chat"| AGENT
-    AGENT -->|"search grounding"| GSEARCH
-    GEM_DIRECT -->|"generateContent()"| GEM
-
-    style Browser fill:#0f1117,stroke:#22d3ee,color:#fff
-    style Server fill:#0f1117,stroke:#8b5cf6,color:#fff
-    style ADK fill:#0f1117,stroke:#10b981,color:#fff
-    style GCP fill:#0f1117,stroke:#3b82f6,color:#fff
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        OPERATOR BROWSER                             │
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  ┌──────────┐ │
+│  │  VitalSigns  │  │ StadiumView  │  │ ActionCards│  │ Security │ │
+│  │ Attendance · │  │  Gate Map ·  │  │  AI Decis- │  │ Runbook  │ │
+│  │ Throughput · │  │  Anomaly     │  │  ion Deck  │  │ Executor │ │
+│  │  Egress ETA  │  │  Overlay     │  │            │  │          │ │
+│  └──────────────┘  └──────────────┘  └────────────┘  └──────────┘ │
+│                                                                     │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  @Agent_Orb Chat Widget — floating AI assistant                │ │
+│  │  Context-aware: injects live match phase, threat level,        │ │
+│  │  active anomaly, and weather into every query                  │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ POST /api/agent-respond
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│              Cloud Run — cric-sentinel  (Node / Express)             │
+│                                                                      │
+│   Receives query + full ops context → attempts ADK agent first       │
+│                                                                      │
+│   Tier 1 ──► POST /chat ──► cricsentinel-agent service              │
+│   Tier 2 ──► Direct Gemini SDK call (if agent unreachable)          │
+│   Tier 3 ──► Procedural keyword fallback (always available)         │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │ POST /chat
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│           Cloud Run — cricsentinel-agent  (Python / ADK)             │
+│                                                                      │
+│   @Agent_Orb — Google ADK ReAct Agent · gemini-2.5-flash            │
+│   Vertex AI backend · Scoped to stadium operations only              │
+│                                                                      │
+│   ┌──────────────────┐  ┌─────────────────┐  ┌───────────────────┐  │
+│   │  get_weather_data │  │   web_search    │  │query_cricsentinel │  │
+│   │  wttr.in live API │  │  DuckDuckGo API │  │      _db          │  │
+│   │  Ahmedabad only   │  │  IPL news,      │  │  Historical ops   │  │
+│   │                   │  │  squad updates  │  │  DB — 2019–2025   │  │
+│   └──────────────────┘  └─────────────────┘  └───────────────────┘  │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Agent Interaction Flow
+## @Agent_Orb — The AI Agent
 
-```mermaid
-sequenceDiagram
-    actor Operator
-    participant Chat as AIChatWidget
-    participant Server as Express Server
-    participant ADK as ADK Agent (Python)
-    participant Tools as ADK Tools
-    participant Gemini as Gemini API
+Built on **Google's Agent Development Kit (ADK)**, `@Agent_Orb` is a scoped ReAct agent that supports duty operators with live intelligence. It uses **Vertex AI** (no quota limits) and enforces strict domain guardrails — it only answers questions about Narendra Modi Stadium operations, IPL logistics, and Ahmedabad weather.
 
-    Operator->>Chat: Types query or selects suggestion
-    Chat->>Server: POST /api/agent-respond<br/>{query, matchState, opsPosture,<br/>currentAnomaly, weather}
+### Three Live Tools
 
-    Server->>ADK: POST /chat (10s timeout)
+| Tool | Data Source | What it answers |
+|---|---|---|
+| `get_weather_data` | [wttr.in](https://wttr.in) real-time API | Current temp, humidity, wind, UV — Ahmedabad only |
+| `web_search` | DuckDuckGo Instant Answer API | IPL news, squad changes, live match updates |
+| `query_cricsentinel_db` | In-memory historical DB (2019–2025) | Gate throughput, incident history, egress benchmarks, capacity zones |
 
-    ADK->>ADK: Build context-rich prompt<br/>(phase, score, threat, anomaly)
-    ADK->>Gemini: runner.run_async()<br/>gemini-2.5-flash
+### Demo Queries (one per tool)
 
-    loop Tool calls (as needed)
-        Gemini-->>ADK: function_call
-        alt google_search
-            ADK->>Tools: Search grounding query
-            Tools-->>ADK: Live web results
-        else get_weather_data
-            ADK->>Tools: wttr.in API call
-            Tools-->>ADK: Temp, wind, humidity
-        else query_cricsentinel_db
-            ADK->>Tools: Historical DB lookup
-            Tools-->>ADK: Gate patterns / incidents
-        end
-        ADK->>Gemini: function_response
-    end
-
-    Gemini-->>ADK: Final text response
-    ADK-->>Server: {success, text, tool_call, session_id, adk: true}
-
-    alt ADK unreachable
-        Server->>Gemini: generateContent() direct
-        Gemini-->>Server: text response
-    end
-
-    Server-->>Chat: {success, sender, text, tool_call}
-    Chat->>Chat: Render response + tool call badge
-    Chat->>Chat: speechSynthesis.speak()
 ```
+"Is current weather safe for death overs, or should we prep a rain hold?"
+→ calls get_weather_data(Ahmedabad)
+
+"Has Gate E ever caused a bottleneck at innings break in a previous NMS final?"
+→ calls query_cricsentinel_db(gate_patterns, phase:innings_break)
+
+"Any squad changes for RCB ahead of today's finale?"
+→ calls web_search(RCB IPL 2026 finale squad news)
+```
+
+### Context Injection
+
+Every operator query automatically includes the current ops state — the agent never answers blind:
+
+```
+[STADIUM OPS STATE — IPL 2026 FINALE]
+Phase: innings_break | Status: innings_break
+Score: 142/4 (14.2 ov)
+Threat: amber | Driver: Gate E saturation
+Weather: HAZE
+Active Alert: BOTTLENECK on CAM-08 (Gate E Corridor)
+```
+
+### 3-Tier Fallback
+
+```
+Query → ADK Agent (Vertex AI + 3 tools)  ←── primary
+            │ unreachable
+            ▼
+        Gemini SDK (direct API call)      ←── secondary
+            │ no key
+            ▼
+        Procedural fallback               ←── always on
+```
+
+The app is **always operational** — no single point of failure.
 
 ---
 
-## Features
+## Key Features
 
-| Feature | Description |
+| Feature | Detail |
 |---|---|
-| **Real-time Vitals** | Live attendance, gate throughput, and egress ETA across match phases |
-| **Stadium Map** | Visual anomaly overlay showing active security or crowd incidents by section |
-| **@Agent_Orb AI (ADK)** | Google ADK-powered ops agent with real tools — live weather, web search, historical DB |
-| **Incident Runbooks** | Step-by-step runbook generation for anomaly response |
-| **Comms Log** | Timestamped communications feed with agent and operator entries |
-| **Decision Cards** | AI-generated action recommendations per match phase |
-| **Timeline Replay** | Scrub through match phases (Pre-Match → Powerplay → Death → Super Over) |
-| **3-Tier Fallback** | ADK agent → direct Gemini → procedural — always operational, no single point of failure |
-| **Dark / Light Theme** | Persistent theme toggle with glass morphism UI |
+| **Ops Command Dashboard** | Four tabs: Ops · Security · Guests · Logistics — unified single pane of glass |
+| **VitalSigns Strip** | Live attendance, gate throughput, egress ETA, weather, and threat level — color-coded by severity |
+| **Stadium Map** | Gate-by-gate anomaly overlay. Active sections glow red/amber on incident detection |
+| **AI Decision Cards** | Phase-driven proposals with confidence scores. Accept → logged + executed. Override → dismissed |
+| **Security Runbook** | Step-by-step incident response. Agent drafts PA broadcast script; human approves before it goes live |
+| **Match Phase Timeline** | Auto-streams through Pre-Match → Powerplay → Innings Break → Death → Super Over in 30s intervals |
+| **@Agent_Orb Chat** | Context-aware floating assistant. Suggestions change per match phase. Shows which backend responded (ADK vs Gemini) |
+| **Human-in-the-Loop** | Agent cannot broadcast PA or execute runbook steps autonomously — operator approval required at every action |
 
 ---
 
-## Tech Stack
+## Scalability
 
-| Layer | Technology |
+| Concern | How it's handled |
 |---|---|
-| Frontend | React 19, TypeScript 5.8, Vite 6 |
-| Styling | Tailwind CSS v4, custom glass morphism theme |
-| Animation | Motion (Framer Motion) |
-| Backend (Node) | Express 4, Node.js — rate-limited REST proxy |
-| **AI Agent Framework** | **Google ADK 1.26 (`google-adk`) — Python** |
-| Agent Model | Gemini 2.5 Flash (ADK) · Gemini 3.5 Flash (direct fallback) |
-| Agent Tools | `google_search` (built-in), `get_weather_data`, `query_cricsentinel_db` |
-| Agent Runtime | FastAPI + uvicorn, managed by `uv` |
-| Build | Vite (SPA) + esbuild (server bundle) |
-| Deploy | Google Cloud Run |
+| Traffic spikes | Cloud Run auto-scales to zero and bursts horizontally — no pre-provisioning |
+| Independent scaling | Frontend (`cric-sentinel`) and agent (`cricsentinel-agent`) are separate services, scale independently |
+| No quota bottlenecks | Agent uses Vertex AI via service account — not tied to free-tier Developer API limits |
+| Stateless agent | Each request is stateless at the infra level; ADK handles in-memory session per conversation |
+
+For production at scale: add Cloud Pub/Sub for real sensor event streaming, BigQuery for cross-match analytics, and Cloud SQL for persistent session state.
 
 ---
 
-## Quick Start
+## Security
 
-**Prerequisites:** Node.js 18+, Python 3.11+, [uv](https://docs.astral.sh/uv/)
-
-```bash
-# 1. Install Node dependencies
-npm install
-
-# 2. Configure your Gemini API key
-cp .env.example .env
-# Edit .env and set GEMINI_API_KEY=your_key_here
-```
-
-**Terminal 1 — Start the ADK Python agent:**
-
-```bash
-cd cricsentinel-orb
-cp ../.env .env          # share the same API key
-./run.sh                 # uv run uvicorn app.server:app --port 8000 --reload
-# → ADK agent live at http://localhost:8000
-```
-
-**Terminal 2 — Start the Node app:**
-
-```bash
-npm run dev
-# → http://localhost:3000
-```
-
-> **No ADK service?** The app automatically falls back to direct Gemini 3.5 Flash. No API key at all? Procedural responses keep the demo fully functional.
+| Concern | Implementation |
+|---|---|
+| API keys | `GEMINI_API_KEY` stored in **GCP Secret Manager** — injected at runtime, never in image or env vars |
+| Agent scope | Hard-enforced domain guardrails in system instruction — out-of-scope queries return a fixed refusal |
+| Human-in-the-loop | PA broadcasts and runbook actions require explicit operator approval — agent cannot act unilaterally |
+| Transport | HTTPS-only via Cloud Run managed TLS |
+| Rate limiting | Express layer enforces 30 req/IP/min to prevent abuse |
 
 ---
 
-## Deploy to Cloud Run
+## Google Cloud Stack
 
-```bash
-# 1. Store your API key securely in Secret Manager
-echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY --data-file=-
-
-# 2. Build and push image via Cloud Build
-gcloud builds submit --tag us-west1-docker.pkg.dev/PROJECT_ID/REPO/cric-sentinel:latest
-
-# 3. Deploy
-gcloud run deploy cric-sentinel \
-  --image=us-west1-docker.pkg.dev/PROJECT_ID/REPO/cric-sentinel:latest \
-  --region=us-west1 \
-  --allow-unauthenticated \
-  --port=3000 \
-  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest"
-```
+| Service | Role |
+|---|---|
+| **Google ADK** (`google-adk 1.33`) | Agent framework — ReAct loop, tool routing, session memory |
+| **Gemini 2.5 Flash** (Vertex AI) | Agent reasoning model — no free-tier quota limits |
+| **Cloud Run** (`us-west1`) | Hosts both services — zero-config HTTPS, auto-scaling |
+| **Cloud Build** | Builds multi-stage Docker images and pushes to Artifact Registry |
+| **Artifact Registry** | Private container image registry |
+| **Secret Manager** | Secure runtime injection of API credentials |
+| **Google Stitch** | AI design tool used to prototype the initial dashboard layout |
+| **agents-cli** | Scaffolded and managed the `cricsentinel-orb` ADK agent project |
 
 ---
 
@@ -332,74 +193,68 @@ gcloud run deploy cric-sentinel \
 
 ```
 cricsentinel/
-├── cricsentinel-orb/           # Google ADK Python agent service
+├── cricsentinel-orb/            # ADK Python agent microservice
 │   ├── app/
-│   │   ├── agent.py            # ADK Agent — model, instruction, tools
-│   │   ├── tools.py            # get_weather_data, query_cricsentinel_db
-│   │   └── server.py           # FastAPI wrapper (POST /chat, GET /health)
-│   ├── pyproject.toml          # uv-managed Python deps
-│   └── run.sh                  # ./run.sh → starts agent on port 8000
+│   │   ├── agent.py             # Agent definition — model, instruction, tools, guardrails
+│   │   ├── tools.py             # get_weather_data · web_search · query_cricsentinel_db
+│   │   └── server.py            # FastAPI wrapper (POST /chat · GET /health)
+│   ├── Dockerfile
+│   └── pyproject.toml
 ├── src/
-│   ├── App.tsx                 # Root component & state orchestrator
-│   ├── types.ts                # Domain types (MatchState, Anomaly, CommsEntry…)
-│   ├── mockTimeline.ts         # Match phase replay data
-│   ├── index.css               # Tailwind v4 + custom theme tokens
+│   ├── App.tsx                  # Root — state orchestrator, timeline engine
+│   ├── mockTimeline.ts          # Match phase simulation data + decision cards
+│   ├── types.ts                 # Domain types
 │   └── components/
-│       ├── AIChatWidget.tsx    # Floating AI chat interface
-│       ├── ActionCards.tsx     # Decision recommendation cards
-│       ├── CommsLog.tsx        # Operations communications feed
-│       ├── GuestsView.tsx      # VIP guest management
-│       ├── LogisticsView.tsx   # Gate & crowd flow
-│       ├── SecurityView.tsx    # Camera anomaly alerts
-│       ├── StadiumView.tsx     # Stadium map + anomaly overlay
-│       ├── TimelineController.tsx # Match phase scrubber
-│       └── VitalSigns.tsx      # Telemetry strip
-├── server.ts                   # Express server + ADK proxy + Gemini fallback
-├── Dockerfile                  # Multi-stage container build
-├── vite.config.ts
-└── tsconfig.json
+│       ├── AIChatWidget.tsx     # Floating AI chat — context injection + tool call display
+│       ├── ActionCards.tsx      # AI decision proposals + incident runbook
+│       ├── VitalSigns.tsx       # Telemetry strip
+│       ├── StadiumView.tsx      # Gate map + anomaly overlay
+│       ├── SecurityView.tsx     # Camera anomaly + runbook execution
+│       ├── LogisticsView.tsx    # Gate & crowd flow
+│       ├── GuestsView.tsx       # VIP guest status
+│       └── TimelineController.tsx
+├── server.ts                    # Express — ADK proxy + fallback chain
+└── Dockerfile                   # Multi-stage Node build
 ```
 
 ---
 
-## Environment Variables
+## Quick Start
 
-| Variable | Required | Description |
-|---|---|---|
-| `GEMINI_API_KEY` | No* | Google Generative AI key. Used by both ADK agent and direct Gemini fallback. |
-| `ADK_AGENT_URL` | No | ADK Python service URL. Default: `http://localhost:8000` |
-| `NODE_ENV` | No | Set to `production` to serve built `dist/` statically |
-| `DISABLE_HMR` | No | Set `true` to disable HMR (AI Studio workflow) |
-| `GCP_PROJECT_ID` | No | GCP project for Vertex AI regional routing |
-| `GCP_LOCATION` | No | GCP region (e.g. `us-central1`) |
-
-*App runs in demo mode without it.
-
----
-
-## Scripts
+**Prerequisites:** Node.js 18+, Python 3.12+, [uv](https://docs.astral.sh/uv/), Gemini API key
 
 ```bash
-# Node app
-npm run dev     # Dev server with HMR
-npm run build   # Production build (Vite SPA + esbuild server)
-npm run start   # Run bundled production server
-npm run lint    # TypeScript type check
-
-# ADK agent
+# Terminal 1 — ADK agent
 cd cricsentinel-orb
-./run.sh        # Start agent service on port 8000
-uv run pytest   # Run agent unit tests
+echo "GEMINI_API_KEY=your_key" > .env
+./run.sh   # → http://localhost:8000
+
+# Terminal 2 — Frontend
+npm install
+echo "GEMINI_API_KEY=your_key" > .env
+npm run dev   # → http://localhost:3000
 ```
+
+> No ADK service? The app falls back to direct Gemini. No key at all? Procedural fallback keeps the demo functional.
 
 ---
 
-## Contributing
+## Deploy
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
+```bash
+# Agent
+gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT/REPO/cricsentinel-agent:latest ./cricsentinel-orb
+gcloud run deploy cricsentinel-agent --image ... --region us-west1
+
+# Frontend
+gcloud builds submit --tag REGION-docker.pkg.dev/PROJECT/REPO/cric-sentinel:latest .
+gcloud run deploy cric-sentinel --image ... --region us-west1 \
+  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest" \
+  --set-env-vars="ADK_AGENT_URL=https://cricsentinel-agent-....run.app"
+```
 
 ---
 
 <div align="center">
-Built with ❤️ for IPL 2026 · Powered by Google ADK + Gemini · Made to keep 130,000 fans safe
+Built for IPL 2026 · Powered by Google ADK + Gemini + Cloud Run · Keeping 130,000 fans safe
 </div>
