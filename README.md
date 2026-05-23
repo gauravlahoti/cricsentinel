@@ -15,7 +15,29 @@
 
 *Built for the IPL 2026 Finale · Narendra Modi Stadium, Ahmedabad · 130,000 seats*
 
+**🌐 Live Demo → [cric-sentinel-593919045544.us-west1.run.app](https://cric-sentinel-593919045544.us-west1.run.app)**
+
 </div>
+
+---
+
+## ☁️ Google Cloud & AI Services
+
+> This project is built entirely on Google Cloud infrastructure and Google AI APIs — a first-class GCP stack from model to deployment.
+
+| Service | Role |
+|---|---|
+| **[Google Gemini 3.5 Flash](https://ai.google.dev/gemini-api/docs)** — `@google/genai` SDK | Core AI brain. Powers @Agent_Orb — generates stadium ops decisions, runbook steps, and natural-language incident analysis in real time |
+| **[Google Cloud Run](https://cloud.google.com/run)** | Serverless container hosting. Zero-config auto-scaling, HTTPS by default, deployed in `us-west1` |
+| **[Google Cloud Build](https://cloud.google.com/build)** | CI/CD pipeline. Builds the multi-stage Docker image and pushes to Artifact Registry on every deploy |
+| **[Google Artifact Registry](https://cloud.google.com/artifact-registry)** | Private Docker image registry (`us-west1`) storing versioned container images |
+| **[Google Secret Manager](https://cloud.google.com/secret-manager)** | Secure storage for `GEMINI_API_KEY` — injected at runtime via Cloud Run secret binding, never baked into the image |
+
+### Why this stack wins for a hackathon
+
+- **Gemini Flash** gives sub-second latency on complex stadium scenario prompts — fast enough for live ops
+- **Cloud Run** goes from zero to globally available HTTPS in one command, no Kubernetes config needed
+- **Secret Manager** means the API key never touches the image, git history, or logs — production-grade security out of the box
 
 ---
 
@@ -169,15 +191,19 @@ npm run dev
 ## Deploy to Cloud Run
 
 ```bash
-# 1. Build
-npm run build
+# 1. Store your API key securely in Secret Manager
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY --data-file=-
 
-# 2. Create a Dockerfile (or use Cloud Run source deploy)
-gcloud run deploy cricsentinel \
-  --source . \
-  --region us-central1 \
-  --set-env-vars GEMINI_API_KEY=your_key \
-  --allow-unauthenticated
+# 2. Build and push image via Cloud Build
+gcloud builds submit --tag us-west1-docker.pkg.dev/PROJECT_ID/REPO/cric-sentinel:latest
+
+# 3. Deploy
+gcloud run deploy cric-sentinel \
+  --image=us-west1-docker.pkg.dev/PROJECT_ID/REPO/cric-sentinel:latest \
+  --region=us-west1 \
+  --allow-unauthenticated \
+  --port=3000 \
+  --set-secrets="GEMINI_API_KEY=GEMINI_API_KEY:latest"
 ```
 
 ---

@@ -3,10 +3,9 @@ import { Coffee, RotateCcw, Compass, MapPin, Smile, CheckSquare, Plus } from "lu
 
 interface GuestsViewProps {
   onAddLog: (entry: any) => void;
-  setAgentSpeaking: (val: string) => void;
 }
 
-export default function GuestsView({ onAddLog, setAgentSpeaking }: GuestsViewProps) {
+export default function GuestsView({ onAddLog }: GuestsViewProps) {
   const [toiletLanesDecongested, setToiletLanesDecongested] = useState<boolean>(false);
   const [concessionRoutesModified, setConcessionRoutesModified] = useState<boolean>(false);
 
@@ -48,7 +47,6 @@ export default function GuestsView({ onAddLog, setAgentSpeaking }: GuestsViewPro
 
   const handleDecongestToilet = () => {
     setToiletLanesDecongested(true);
-    setAgentSpeaking("Pre-staging secondary guest restrooms in the West Lobby corridor. Interactive map signages updated.");
     onAddLog({
       id: "guest-toilet-" + Date.now(),
       ts: new Date().toLocaleTimeString(),
@@ -61,7 +59,6 @@ export default function GuestsView({ onAddLog, setAgentSpeaking }: GuestsViewPro
 
   const handleRouteConcession = () => {
     setConcessionRoutesModified(true);
-    setAgentSpeaking("Balanced Concourse Food Stand load factors by initiating an automated digital voucher discount alert.");
     onAddLog({
       id: "guest-concession-" + Date.now(),
       ts: new Date().toLocaleTimeString(),

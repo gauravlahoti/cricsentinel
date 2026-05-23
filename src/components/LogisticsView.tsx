@@ -4,10 +4,9 @@ import { Users2, ArrowRightLeft, ShieldAlert, CheckCircle2, ChevronRight, Compas
 
 interface LogisticsViewProps {
   onAddLog: (entry: any) => void;
-  setAgentSpeaking: (val: string) => void;
 }
 
-export default function LogisticsView({ onAddLog, setAgentSpeaking }: LogisticsViewProps) {
+export default function LogisticsView({ onAddLog }: LogisticsViewProps) {
   const [subTab, setSubTab] = useState<string>("flow");
   const [diverted, setDiverted] = useState<boolean>(false);
   const [throttled, setThrottled] = useState<boolean>(false);
@@ -66,7 +65,6 @@ export default function LogisticsView({ onAddLog, setAgentSpeaking }: LogisticsV
 
   const handleAcceptAll = () => {
     setDiverted(true);
-    setAgentSpeaking("Re-routing parameters deployed instantly. Gate F corridor traffic routers updated, and lobby display systems refreshed.");
     onAddLog({
       id: "log-reroute-" + Date.now(),
       ts: new Date().toLocaleTimeString(),
@@ -79,7 +77,6 @@ export default function LogisticsView({ onAddLog, setAgentSpeaking }: LogisticsV
 
   const handleThrottle = () => {
     setThrottled(true);
-    setAgentSpeaking("Throttling rule updated on Gates. Inflow reduced of the turnstiles speed parameters to 30% reduction.");
     onAddLog({
       id: "log-throttle-" + Date.now(),
       ts: new Date().toLocaleTimeString(),

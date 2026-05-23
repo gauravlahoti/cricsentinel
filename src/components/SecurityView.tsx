@@ -4,15 +4,11 @@ import { ShieldAlert, Timer, Check, AlertCircle, Volume2, Shield, Radio, Termina
 
 interface SecurityViewProps {
   commsEntries: any[];
-  agentSpeaking: string;
-  setAgentSpeaking: (val: string) => void;
   onAddLog: (entry: any) => void;
 }
 
 export default function SecurityView({
   commsEntries,
-  agentSpeaking,
-  setAgentSpeaking,
   onAddLog,
 }: SecurityViewProps) {
   const [activeStep, setActiveStep] = useState<number>(4); // Step 4 is the PA Script preview in screenshots
@@ -70,7 +66,6 @@ export default function SecurityView({
   const handleBroadcast = () => {
     setIsBroadcasted(true);
     setActiveStep(5);
-    setAgentSpeaking("Calm Advisory PA broadcast initiated. Concourse signages switched to divert and security staff cordon fully staged.");
     
     // Add operational logs
     onAddLog({

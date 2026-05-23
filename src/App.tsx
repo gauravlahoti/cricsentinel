@@ -20,15 +20,12 @@ import GuestsView from "./components/GuestsView";
 import AIChatWidget from "./components/AIChatWidget";
 import {
   ShieldAlert,
-  Send,
-  Sparkles,
   Wifi,
   Database,
   Grid,
   Radio,
   User,
   ExternalLink,
-  Bot,
   Sun,
   Moon
 } from "lucide-react";
@@ -86,10 +83,6 @@ export default function App() {
   // Filters
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
 
-  // Chat/Input support
-  const [userQuery, setUserQuery] = useState<string>("");
-  const [agentSpeaking, setAgentSpeaking] = useState<string>("");
-  const [isAILending, setIsAILending] = useState<boolean>(false);
 
   // Initialize operational snapshot based on Selected Node ID
   useEffect(() => {
@@ -104,8 +97,6 @@ export default function App() {
     setThroughput(freshState.node.gateThroughput);
     setEgressEta(freshState.node.egressEta);
     setWeatherText(freshState.node.weather);
-
-    setAgentSpeaking(freshState.node.agentSpeech);
 
     // Dynamic routing to specific workspaces based on active scenario triggers
     if (activeNodeId === "middle_overs") {
@@ -259,93 +250,6 @@ export default function App() {
     });
   };
 
-  // Submit operator text command to Gemini REST API on the server
-  const handleSendQuery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userQuery.trim() || isAILending) return;
-
-    const queryMessage = userQuery.trim();
-    setUserQuery("");
-    setIsAILending(true);
-
-    const timestamp = new Date().toLocaleTimeString();
-
-    // 1. Post operator request to local Comms terminal
-    const operatorLog: CommsEntry = {
-      id: "user-q-" + Date.now(),
-      ts: timestamp,
-      speaker: "ops_lead",
-      role_color: "grey",
-      text: queryMessage,
-      trace_id: "trx-req-" + Math.floor(Math.random() * 90000)
-    };
-    setCommsEntries((prev) => [...prev, operatorLog]);
-
-    try {
-      // 2. Trigger Express full-stack API route
-      const response = await fetch("/api/agent-respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: queryMessage,
-          matchState,
-          opsPosture,
-          currentAnomaly,
-          weather: weatherText
-        })
-      });
-
-      const data = await response.json();
-
-      if (data && data.success) {
-        setAgentSpeaking(data.text);
-
-        // Append Orb response and its tool called signature in log details!
-        const orbLog: CommsEntry = {
-          id: "orb-r-" + Date.now(),
-          ts: new Date().toLocaleTimeString(),
-          speaker: "agent_orb",
-          role_color: "violet",
-          text: data.text,
-          trace_id: "trx-rsp-" + Math.floor(Math.random() * 90000),
-          tool_call: data.tool_call
-            ? {
-                name: data.tool_call.name,
-                args: data.tool_call.args,
-                result_summary: data.tool_call.result_summary
-              }
-            : undefined
-        };
-        setCommsEntries((prev) => [...prev, orbLog]);
-      }
-    } catch (err) {
-      console.error("Failed to query Express API backend:", err);
-    } finally {
-      setIsAILending(false);
-    }
-  };
-
-  // Quick action chips for Operator voice bar queries
-  const quickQuestionsByNode = {
-    pre_match: ["Status overview", "Check gate throughput", "Pre-stage bathroom lanes"],
-    powerplay: ["Exits report", "Are concourse levels safe?", "Predict peak crowd hour"],
-    middle_overs: ["Trace CAM_14 bag anomaly", "Incident risk rating", "Dispatch guard"],
-    innings_break: ["Bottleneck alert", "Divert traffic to Gate F", "Trigger PA speaker notice"],
-    death_overs: ["Radar weather forecast", "Pre-position stanchions", "Activate shelters"],
-    super_over: ["Lock gates precautionary", "Egress eta target", "Notify paramedics"],
-    done: ["Shift handover summary", "Egress peak speed", "Archive duty log"]
-  };
-
-  const activeQuickQuests = quickQuestionsByNode[activeNodeId as keyof typeof quickQuestionsByNode] || [];
-
-  // Determine threat background glow values
-  const getOrbMeshColor = () => {
-    if (!opsPosture) return "from-violet-500 to-cyan-500";
-    if (opsPosture.level === "critical") return "from-red-600 via-orange-600 to-red-500 shadow-md glow-red";
-    if (opsPosture.level === "amber") return "from-amber-600 via-yellow-500 to-amber-500 shadow-sm glow-amber";
-    if (opsPosture.level === "elevated") return "from-violet-600 via-indigo-600 to-cyan-400";
-    return "from-violet-500 to-cyan-400";
-  };
 
   return (
     <div className={`min-h-screen relative p-4 max-w-7xl mx-auto flex flex-col justify-between select-none transition-colors duration-500`} id="cricsentinel-main-deck">
@@ -546,8 +450,6 @@ export default function App() {
                   anomaly={currentAnomaly}
                   activeFilter={selectedFilter}
                   onSelectGate={(gateName) => {
-                    setUserQuery(`Predict stanchion alignment flow for concourse around ${gateName}`);
-                    // Highlight with logs
                     const queryLog: CommsEntry = {
                       id: "stadium-tap-" + Date.now(),
                       ts: new Date().toLocaleTimeString(),
@@ -577,8 +479,6 @@ export default function App() {
           {activeTab === "security" && (
             <SecurityView
               commsEntries={commsEntries}
-              agentSpeaking={agentSpeaking}
-              setAgentSpeaking={setAgentSpeaking}
               onAddLog={(newLog) => setCommsEntries((p) => [...p, newLog])}
             />
           )}
@@ -586,104 +486,16 @@ export default function App() {
           {activeTab === "logistics" && (
             <LogisticsView
               onAddLog={(newLog) => setCommsEntries((p) => [...p, newLog])}
-              setAgentSpeaking={setAgentSpeaking}
             />
           )}
 
           {activeTab === "guests" && (
             <GuestsView
               onAddLog={(newLog) => setCommsEntries((p) => [...p, newLog])}
-              setAgentSpeaking={setAgentSpeaking}
             />
           )}
         </section>
       )}
-
-      {/* 5. Bottom Voice Bar (Agent Speech and Chat interface) */}
-      <footer className="relative z-10 mt-4 bg-glass-surface rounded-xl border border-glass-border/40 p-4 flex flex-col md:flex-row items-center gap-4">
-        
-        {/* The glowing mesh Agent Orb */}
-        <div className="flex-shrink-0 flex items-center gap-3">
-          <motion.div
-            animate={{
-              scale: isAILending ? [1, 1.15, 1] : [1, 1.05, 1],
-              rotate: [0, 180, 360]
-            }}
-            transition={{
-              scale: { repeat: Infinity, duration: isAILending ? 1.5 : 4, ease: "easeInOut" },
-              rotate: { repeat: Infinity, duration: 15, ease: "linear" }
-            }}
-            className={`w-12 h-12 rounded-full bg-gradient-to-tr ${getOrbMeshColor()} relative flex items-center justify-center p-0.5 select-none`}
-          >
-            {/* Inner clean orb core */}
-            <div className="w-10 h-10 bg-[#07080c] rounded-full flex items-center justify-center relative">
-              <Bot className="w-5 h-5 text-brand-cyan shrink-0" />
-            </div>
-            
-            {/* Pulsing state ring */}
-            <div className="absolute inset-0 rounded-full border border-white/5 opacity-50 animate-ping"></div>
-          </motion.div>
-          
-          <div className="select-none">
-            <span className="text-[9px] font-mono tracking-widest text-[#8b5cf6] font-bold uppercase flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#8b5cf6]" /> Resident Agent Orb
-            </span>
-            <h2 className="text-xs font-semibold text-white font-display">
-              @Agent_Orb
-            </h2>
-          </div>
-        </div>
-
-        {/* Streaming text bubble */}
-        <div className="flex-1 bg-glass-base/70 border border-white/5 rounded-lg p-2.5 min-h-[44px] flex items-center">
-          <p className="text-[10px] md:text-xs text-gray-300 italic font-medium leading-relaxed">
-            {isAILending ? (
-              <span className="flex items-center gap-2 font-mono text-xs text-brand-cyan">
-                <SpinnerIcon /> Processing signals. Consulting Gemini 3.5 Flash server-side...
-              </span>
-            ) : (
-              agentSpeaking || "Active listening online. State queries above or tap the stanchion shortcuts below."
-            )}
-          </p>
-        </div>
-
-        {/* Input panel & custom triggers */}
-        <div className="w-full md:w-auto flex flex-col gap-2">
-          {/* Quick chip queries */}
-          <div className="flex flex-wrap gap-1.5 justify-end">
-            {activeQuickQuests.slice(0, 3).map((quest, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setUserQuery(quest);
-                }}
-                className="px-2 py-0.5 rounded-full bg-white/[0.03] hover:bg-white/[0.08] text-gray-400 hover:text-white border border-white/5 transition-all text-[8px] font-mono uppercase font-semibold cursor-pointer"
-              >
-                + {quest}
-              </button>
-            ))}
-          </div>
-
-          {/* Form write input */}
-          <form onSubmit={handleSendQuery} className="flex gap-2 w-full md:w-[350px]">
-            <input
-              type="text"
-              value={userQuery}
-              onChange={(e) => setUserQuery(e.target.value)}
-              placeholder="Query Agent Orb (e.g., 'Verify CAM_14 backpack anomaly')"
-              className="flex-1 bg-glass-base/90 border border-glass-border/40 text-xs text-white rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-cyan font-mono"
-            />
-            <button
-              type="submit"
-              disabled={isAILending || !userQuery.trim()}
-              className="px-3.5 py-1.5 rounded-lg bg-brand-cyan hover:bg-brand-cyan/95 text-glass-base font-semibold text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 select-none cursor-pointer"
-            >
-              <Send className="w-3.5 h-3.5" /> Send
-            </button>
-          </form>
-        </div>
-
-      </footer>
 
       {/* Real-time Embedded AI Chat Widget */}
       <AIChatWidget
@@ -699,12 +511,3 @@ export default function App() {
   );
 }
 
-// Inline Spinner icon
-function SpinnerIcon() {
-  return (
-    <svg className="animate-spin h-3.5 w-3.5 text-brand-cyan" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-  );
-}
