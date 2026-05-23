@@ -239,6 +239,36 @@ export default function LogisticsView({ onAddLog }: LogisticsViewProps) {
 
               {/* General stadium ingress indicators */}
               <path d="M 80,180 A 140,110 0 0,0 120,220" stroke="rgba(245, 158, 11, 0.6)" strokeWidth="4" strokeDasharray="2 4" />
+
+              {/* Gate labels A–F around the ellipse perimeter (cx=200,cy=150,rx=140,ry=110) */}
+              {[
+                { gate: "A", angle: -Math.PI / 2,          status: "SURGE"   },
+                { gate: "B", angle: -Math.PI / 6,          status: "NOMINAL" },
+                { gate: "C", angle:  Math.PI / 6,          status: "NOMINAL" },
+                { gate: "D", angle:  Math.PI / 2,          status: "WATCH"   },
+                { gate: "E", angle: (5 * Math.PI) / 6,     status: diverted ? "NOMINAL" : "NOMINAL" },
+                { gate: "F", angle: -(5 * Math.PI) / 6,    status: diverted ? "SURGE" : "NOMINAL"  },
+              ].map(({ gate, angle, status }) => {
+                const cx = 200, cy = 150, rx = 140, ry = 110;
+                const dx = cx + rx * Math.cos(angle);
+                const dy = cy + ry * Math.sin(angle);
+                const lx = cx + (rx + 20) * Math.cos(angle);
+                const ly = cy + (ry + 16) * Math.sin(angle);
+                const color = status === "SURGE" ? "#ef4444" : status === "WATCH" ? "#f59e0b" : "#06b6d4";
+                return (
+                  <g key={gate}>
+                    <line x1={dx} y1={dy} x2={cx + (rx+8)*Math.cos(angle)} y2={cy + (ry+6)*Math.sin(angle)} stroke={color} strokeWidth="1" opacity="0.6" />
+                    <circle cx={lx} cy={ly} r="9" fill="#07080c" stroke={color} strokeWidth="1.5" />
+                    <text x={lx} y={ly+1} textAnchor="middle" dominantBaseline="middle" fill={color} fontSize="8px" fontFamily="monospace" fontWeight="bold">{gate}</text>
+                    {status !== "NOMINAL" && (
+                      <circle cx={lx} cy={ly} r="9" fill="none" stroke={color} strokeWidth="1.5">
+                        <animate attributeName="r" values="9;16;9" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                  </g>
+                );
+              })}
             </svg>
 
             {/* Bottom details Overlay Box */}
