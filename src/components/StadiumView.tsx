@@ -166,33 +166,49 @@ export default function StadiumView({ matchState, anomaly, activeFilter, onSelec
             <clipPath id="stadium-ellipse-clip">
               <ellipse cx="320" cy="190" rx="270" ry="150" />
             </clipPath>
-            <radialGradient id="radar-glow" cx="50%" cy="50%" r="50%">
+            <radialGradient id="radar-bg-glow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="rgba(6, 182, 212, 0)" />
-              <stop offset="100%" stopColor="rgba(6, 182, 212, 0.12)" />
+              <stop offset="100%" stopColor="rgba(6, 182, 212, 0.18)" />
             </radialGradient>
+            <filter id="radar-sweep-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <pattern id="scanlines" x="0" y="0" width="640" height="4" patternUnits="userSpaceOnUse">
+              <rect width="640" height="1" y="0" fill="rgba(0,0,0,0.07)" />
+            </pattern>
           </defs>
 
           {/* Active sweeping high-tech Radar scanner overlays restricted inside stadium frame */}
           {isRadarActive && (
             <g clipPath="url(#stadium-ellipse-clip)">
               {/* Radar center backglow */}
-              <ellipse cx="320" cy="190" rx="270" ry="150" fill="url(#radar-glow)" />
+              <ellipse cx="320" cy="190" rx="270" ry="150" fill="url(#radar-bg-glow)" />
+
+              {/* Scanline texture over stadium */}
+              <ellipse cx="320" cy="190" rx="270" ry="150" fill="url(#scanlines)" />
 
               {/* Laser sweep rotational coordinate line */}
               <motion.g
                 transform="translate(320, 190)"
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 4.8, ease: "linear" }}
+                filter="url(#radar-sweep-glow)"
               >
-                <line x1="0" y1="0" x2="270" y2="0" stroke="rgba(6, 182, 212, 0.45)" strokeWidth="2.5" />
-                <polygon points="0,0 270,0 263,-40 245,-80 215,-115" fill="rgba(6, 182, 212, 0.12)" />
-                <polygon points="0,0 215,-115 175,-145" fill="rgba(6, 182, 212, 0.05)" />
-                
+                <line x1="0" y1="0" x2="270" y2="0" stroke="rgba(6, 182, 212, 0.8)" strokeWidth="2.5" />
+                <polygon points="0,0 270,0 263,-40 245,-80 215,-115" fill="rgba(6, 182, 212, 0.28)" />
+                <polygon points="0,0 215,-115 175,-145" fill="rgba(6, 182, 212, 0.12)" />
+
                 {/* Active vector tracking beacon dots */}
                 <circle cx="265" cy="0" r="4" fill="#22d3ee" className="animate-ping" />
               </motion.g>
             </g>
           )}
+
+          {/* Slow-rotating outer violet accent ring */}
+          <ellipse cx="320" cy="190" rx="285" ry="165" fill="none" stroke="rgba(139,92,246,0.1)" strokeWidth="1">
+            <animateTransform attributeName="transform" type="rotate" from="0 320 190" to="360 320 190" dur="120s" repeatCount="indefinite" />
+          </ellipse>
 
           {/* Main Stadium Outer Ring Frame */}
           <ellipse
@@ -201,7 +217,7 @@ export default function StadiumView({ matchState, anomaly, activeFilter, onSelec
             rx="270"
             ry="150"
             fill="none"
-            stroke="rgba(6, 182, 212, 0.15)"
+            stroke="rgba(6, 182, 212, 0.38)"
             strokeWidth="3"
           />
 
@@ -240,8 +256,8 @@ export default function StadiumView({ matchState, anomaly, activeFilter, onSelec
               cy="120"
               rx="40"
               ry="25"
-              fill="rgba(239, 68, 68, 0.2)"
-              stroke="rgba(239, 68, 68, 0.6)"
+              fill="rgba(239, 68, 68, 0.35)"
+              stroke="rgba(239, 68, 68, 0.9)"
               strokeWidth="2.5"
               initial={{ scale: 0.9, opacity: 0.5 }}
               animate={{ scale: [0.9, 1.2, 0.9], opacity: [0.5, 0.9, 0.5] }}

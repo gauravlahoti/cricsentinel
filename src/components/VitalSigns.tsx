@@ -73,13 +73,13 @@ export default function VitalSigns({
         onClick={() => onSelectFilter(selectedFilter === "attendance" ? null : "attendance")}
         className={`p-3 rounded-lg bg-glass-surface border ${
           selectedFilter === "attendance" ? "border-brand-cyan glow-cyan" : "border-white/5"
-        } cursor-pointer transition-all flex flex-col justify-between h-[82px] relative overflow-hidden`}
+        } cursor-pointer transition-all flex flex-col justify-between h-[90px] relative overflow-hidden`}
       >
         <div className="flex justify-between items-center text-[10px] font-mono tracking-wider font-semibold text-gray-400 uppercase">
           <span>Attendance</span>
           <Users2 className={`w-3.5 h-3.5 ${selectedFilter === "attendance" ? "text-brand-cyan" : "text-gray-500"}`} />
         </div>
-        <div className="text-xl md:text-2xl font-display font-semibold text-white tracking-tight mt-1.5 font-mono">
+        <div className="text-2xl md:text-3xl font-display font-semibold text-white tracking-tight mt-1.5 font-mono neon-number">
           {attendanceVal.toLocaleString()}
         </div>
         <div className="text-[9px] font-mono text-gray-400 mt-1 flex justify-between items-center">
@@ -97,13 +97,15 @@ export default function VitalSigns({
         onClick={() => onSelectFilter(selectedFilter === "throughput" ? null : "throughput")}
         className={`p-3 rounded-lg bg-glass-surface border ${
           selectedFilter === "throughput" ? "border-brand-cyan glow-cyan" : getPosturizedBorder("throughput")
-        } cursor-pointer transition-all flex flex-col justify-between h-[82px] relative overflow-hidden`}
+        } cursor-pointer transition-all flex flex-col justify-between h-[90px] relative overflow-hidden${
+          matchState.status === "innings_break" ? " animated-border-card" : ""
+        }`}
       >
         <div className="flex justify-between items-center text-[10px] font-mono tracking-wider font-semibold text-gray-400 uppercase">
           <span>Throughput</span>
           <ArrowDownUp className={`w-3.5 h-3.5 ${selectedFilter === "throughput" ? "text-brand-cyan" : "text-gray-500"}`} />
         </div>
-        <div className={`text-xl md:text-2xl font-display font-semibold tracking-tight mt-1.5 font-mono ${
+        <div className={`text-2xl md:text-3xl font-display font-semibold tracking-tight mt-1.5 font-mono neon-number ${
           matchState.status === "innings_break" ? "text-brand-amber" : "text-white"
         }`}>
           {(throughputVal / 1000).toFixed(1)}k/min
@@ -125,13 +127,13 @@ export default function VitalSigns({
         onClick={() => onSelectFilter(selectedFilter === "egress" ? null : "egress")}
         className={`p-3 rounded-lg bg-glass-surface border ${
           selectedFilter === "egress" ? "border-brand-cyan glow-cyan" : "border-white/5"
-        } cursor-pointer transition-all flex flex-col justify-between h-[82px] relative overflow-hidden`}
+        } cursor-pointer transition-all flex flex-col justify-between h-[90px] relative overflow-hidden`}
       >
         <div className="flex justify-between items-center text-[10px] font-mono tracking-wider font-semibold text-gray-400 uppercase">
           <span>Egress ETA</span>
           <Timer className={`w-3.5 h-3.5 ${selectedFilter === "egress" ? "text-brand-cyan" : "text-gray-500"}`} />
         </div>
-        <div className="text-xl md:text-2xl font-display font-semibold text-white tracking-tight mt-1.5 font-mono">
+        <div className="text-2xl md:text-3xl font-display font-semibold text-white tracking-tight mt-1.5 font-mono neon-number">
           {egressEtaVal === 0 ? "STBY" : `${egressEtaVal} MIN`}
         </div>
         <div className="text-[9px] font-mono text-gray-400 mt-1 flex justify-between items-center">
@@ -151,7 +153,9 @@ export default function VitalSigns({
         onClick={() => onSelectFilter(selectedFilter === "threat" ? null : "threat")}
         className={`p-3 rounded-lg bg-glass-surface border ${
           selectedFilter === "threat" ? "border-brand-cyan glow-cyan" : getPosturizedBorder("threat")
-        } cursor-pointer transition-all flex flex-col justify-between h-[82px] relative overflow-hidden`}
+        } cursor-pointer transition-all flex flex-col justify-between h-[90px] relative overflow-hidden${
+          (opsPosture.level === "elevated" || opsPosture.level === "amber") ? " animated-border-card" : ""
+        }`}
       >
         <div className="flex justify-between items-center text-[10px] font-mono tracking-wider font-semibold text-gray-400 uppercase">
           <span>Threat Level</span>
@@ -179,7 +183,7 @@ export default function VitalSigns({
         onClick={() => onSelectFilter(selectedFilter === "weather" ? null : "weather")}
         className={`p-3 rounded-lg bg-glass-surface border ${
           selectedFilter === "weather" ? "border-brand-cyan glow-cyan" : getPosturizedBorder("weather")
-        } cursor-pointer transition-all flex flex-col justify-between h-[82px] relative overflow-hidden`}
+        } cursor-pointer transition-all flex flex-col justify-between h-[90px] relative overflow-hidden`}
       >
         <div className="flex justify-between items-center text-[10px] font-mono tracking-wider font-semibold text-gray-400 uppercase">
           <span>Weather Sensor</span>

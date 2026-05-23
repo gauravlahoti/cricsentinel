@@ -253,8 +253,9 @@ export default function App() {
 
   return (
     <div className={`min-h-screen relative p-4 max-w-7xl mx-auto flex flex-col justify-between select-none transition-colors duration-500`} id="cricsentinel-main-deck">
-      {/* Background radial atmosphere */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-cyan-950/10 blur-[140px] rounded-full pointer-events-none z-0"></div>
+      {/* Background atmosphere — cyan top-left, violet bottom-right */}
+      <div className="absolute top-0 left-0 w-[650px] h-[520px] bg-cyan-950/15 blur-[160px] rounded-full pointer-events-none z-0 -translate-x-1/4 -translate-y-1/4"></div>
+      <div className="absolute bottom-0 right-0 w-[520px] h-[420px] bg-violet-950/15 blur-[140px] rounded-full pointer-events-none z-0 translate-x-1/4 translate-y-1/4"></div>
 
       {/* 1. Header/Navigation Brand bar */}
       <header className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-glass-border/30 pb-4 mb-4 gap-4">

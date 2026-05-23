@@ -348,29 +348,34 @@ export default function AIChatWidget({
         )}
       </AnimatePresence>
 
-      {/* Launcher Button Trigger */}
+      {/* Launcher — glowing AI orb */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.93 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="px-4 py-3 bg-gradient-to-r from-brand-violet to-[#8b5cf6] hover:from-brand-violet hover:to-[#7c3aed] text-white rounded-full shadow-2xl border border-brand-cyan/30 flex items-center gap-2 select-none cursor-pointer glow-violet"
+        className="relative flex flex-col items-center gap-1 cursor-pointer select-none"
         title="Access CricSentinel Agent Orb"
       >
-        <div className="relative">
-          <Bot className="w-5 h-5" />
+        {/* Sphere */}
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#a855f7] via-[#7c3aed] to-[#3b0764] flex items-center justify-center shadow-2xl orb-breathe relative overflow-hidden">
+          <Bot className="w-6 h-6 text-white relative z-10" />
+          {/* Gloss highlight */}
+          <div className="absolute top-1.5 left-3 w-5 h-3 bg-white/25 rounded-full blur-sm -rotate-12 pointer-events-none" />
+          {/* Notification dot */}
           <AnimatePresence>
-            {hasNewNotif && (
+            {hasNewNotif && !isOpen && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full bg-brand-cyan border border-black animate-pulse"
+                className="absolute top-0.5 right-0.5 w-3 h-3 rounded-full bg-brand-cyan border-2 border-[#04040a] animate-pulse z-20"
               />
             )}
           </AnimatePresence>
         </div>
-        <span className="text-[11px] font-mono tracking-wider font-bold uppercase pointer-events-none">
-          {isOpen ? "COLLAPSE ORB" : "ASK AGENT ORB"}
+        {/* Label */}
+        <span className="text-[9px] font-mono tracking-widest text-gray-400 uppercase">
+          {isOpen ? "COLLAPSE" : "AGENT ORB"}
         </span>
       </motion.button>
     </div>
