@@ -72,6 +72,41 @@ export default function StadiumView({ matchState, anomaly, activeFilter, onSelec
     }
   };
 
+  // Gate positions around the stadium ellipse (cx=320, cy=190, rx=270, ry=150)
+  // Angles in radians, labels placed just outside the ring
+  const GATE_ANGLES: Record<string, number> = {
+    A: -Math.PI / 2,        // North (top)
+    B: -Math.PI / 6,        // Upper-right
+    C:  Math.PI / 6,        // Lower-right
+    D:  Math.PI / 2,        // South (bottom)
+    E:  (5 * Math.PI) / 6,  // Lower-left
+    F: -(5 * Math.PI) / 6,  // Upper-left
+  };
+
+  const getGateStatuses = (): Record<string, "surge" | "watch" | "nominal"> => {
+    if (matchState.status === "innings_break") {
+      return { A: "watch", B: "nominal", C: "nominal", D: "nominal", E: "surge", F: "nominal" };
+    }
+    if (matchState.status === "pre_match") {
+      return { A: "nominal", B: "nominal", C: "nominal", D: "nominal", E: "watch", F: "nominal" };
+    }
+    if (matchState.phase === "death" || matchState.status === "super_over") {
+      return { A: "nominal", B: "nominal", C: "nominal", D: "watch", E: "watch", F: "nominal" };
+    }
+    if (matchState.status === "done") {
+      return { A: "surge", B: "surge", C: "watch", D: "surge", E: "surge", F: "watch" };
+    }
+    if (anomaly?.camera === "CAM_14") {
+      // Section 312 is upper-tier east → near Gate C/B
+      return { A: "nominal", B: "watch", C: "watch", D: "nominal", E: "nominal", F: "nominal" };
+    }
+    return { A: "nominal", B: "nominal", C: "nominal", D: "nominal", E: "nominal", F: "nominal" };
+  };
+
+  const gateStatuses = getGateStatuses();
+  const gateStatusColor = (s: "surge" | "watch" | "nominal") =>
+    s === "surge" ? "#ef4444" : s === "watch" ? "#f59e0b" : "#06b6d4";
+
   // Coordinates for interactive markers on Narendra Modi Stadium layout
   const pins = [
     {
@@ -274,6 +309,47 @@ export default function StadiumView({ matchState, anomaly, activeFilter, onSelec
           <path d="M 190,95 A 240,130 0 0,1 450,95" fill="none" stroke="rgba(255, 255, 255, 0.07)" strokeWidth="15" />
           {/* South Stand */}
           <path d="M 190,285 A 240,130 0 0,0 450,285" fill="none" stroke="rgba(255, 255, 255, 0.07)" strokeWidth="15" />
+
+          {/* Gate labels around the stadium perimeter */}
+          {Object.entries(GATE_ANGLES).map(([gate, angle]) => {
+            const rx = 270, ry = 150, cx = 320, cy = 190;
+            const labelR = { x: rx + 22, y: ry + 18 };
+            const lx = cx + labelR.x * Math.cos(angle);
+            const ly = cy + labelR.y * Math.sin(angle);
+            // dot on the ring edge
+            const dx = cx + rx * Math.cos(angle);
+            const dy = cy + ry * Math.sin(angle);
+            const status = gateStatuses[gate];
+            const color = gateStatusColor(status);
+            return (
+              <g key={`gate-label-${gate}`}>
+                {/* tick mark from ring edge outward */}
+                <line
+                  x1={dx} y1={dy}
+                  x2={cx + (rx + 10) * Math.cos(angle)}
+                  y2={cy + (ry + 8) * Math.sin(angle)}
+                  stroke={color} strokeWidth="1.5" opacity="0.7"
+                />
+                {/* gate badge */}
+                <circle cx={lx} cy={ly} r="11" fill="#0d0f17" stroke={color} strokeWidth="1.5" opacity="0.9" />
+                <text
+                  x={lx} y={ly + 1}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fill={color} fontSize="9px" fontFamily="var(--font-mono)" fontWeight="bold"
+                  className="select-none"
+                >
+                  {gate}
+                </text>
+                {/* pulse ring for surge/watch */}
+                {status !== "nominal" && (
+                  <circle cx={lx} cy={ly} r="11" fill="none" stroke={color} strokeWidth="1.5">
+                    <animate attributeName="r" values="11;18;11" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+                  </circle>
+                )}
+              </g>
+            );
+          })}
 
           {/* Active wind/rain vector overlays */}
           {isRainActive && (
