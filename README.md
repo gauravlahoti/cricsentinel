@@ -31,6 +31,8 @@
 | **[Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/)** — `google-adk` | Primary AI agent framework. Powers the @Agent_Orb Python agent with multi-tool reasoning, session memory, and built-in Google Search grounding |
 | **[Google Gemini 2.5 Flash](https://ai.google.dev/gemini-api/docs)** — ADK agent model | Drives the ADK agent's reasoning, tool selection, and natural-language ops guidance |
 | **[Google Gemini 3.5 Flash](https://ai.google.dev/gemini-api/docs)** — `@google/genai` SDK | Direct API fallback layer — used when the ADK service is unreachable |
+| **[Google Stitch](https://stitch.withgoogle.com)** | AI-powered UI design tool used to generate the initial dashboard layout, component structure, and visual design system |
+| **[agents-cli](https://google.github.io/adk-docs/)** (`antigravity-cli`) | Google's CLI for scaffolding, running, and deploying ADK agents — used to bootstrap the `cricsentinel-orb` agent project and manage the agent development workflow |
 | **[Google Cloud Run](https://cloud.google.com/run)** | Serverless container hosting. Zero-config auto-scaling, HTTPS by default, deployed in `us-west1` |
 | **[Google Cloud Build](https://cloud.google.com/build)** | CI/CD pipeline. Builds the multi-stage Docker image and pushes to Artifact Registry on every deploy |
 | **[Google Artifact Registry](https://cloud.google.com/artifact-registry)** | Private Docker image registry (`us-west1`) storing versioned container images |
@@ -123,6 +125,8 @@ Operator Query
 CricSentinel is a **stadium operations command center** that gives ops teams a single pane of glass for managing a packed cricket stadium. It combines real-time telemetry (attendance, gate throughput, egress ETA), anomaly detection (crowd surges, security alerts), and an embedded AI agent — **@Agent_Orb** — that answers operator queries, suggests decisions, and generates runbook steps on the fly.
 
 Think: mission control, but for a cricket finale with 130,000 fans.
+
+The initial UI design and component layout were prototyped with **[Google Stitch](https://stitch.withgoogle.com)**, Google's AI-powered design tool, before being implemented in React + Tailwind CSS v4. The ADK agent project was scaffolded and managed using **agents-cli** (`antigravity-cli`).
 
 ---
 
