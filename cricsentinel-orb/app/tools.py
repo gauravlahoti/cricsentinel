@@ -3,7 +3,52 @@ from typing import Any
 import httpx
 
 # ---------------------------------------------------------------------------
-# Tool 1: Live weather via wttr.in (no API key required)
+# Tool 1: Web search via DuckDuckGo Instant Answer API (no key required)
+# ---------------------------------------------------------------------------
+
+
+def web_search(query: str) -> dict[str, Any]:
+    """Search the web for current information — IPL news, stadium updates, live data.
+
+    Args:
+        query: The search query string (e.g. "IPL 2026 RCB vs MI latest news").
+
+    Returns:
+        Dictionary with abstract text, source, URL, and related topics.
+    """
+    try:
+        resp = httpx.get(
+            "https://api.duckduckgo.com/",
+            params={
+                "q": query,
+                "format": "json",
+                "no_html": "1",
+                "skip_disambig": "1",
+            },
+            timeout=6.0,
+            follow_redirects=True,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        topics = [
+            t.get("Text", "")
+            for t in data.get("RelatedTopics", [])[:5]
+            if isinstance(t, dict) and t.get("Text")
+        ]
+        return {
+            "query": query,
+            "abstract": data.get("AbstractText", ""),
+            "source": data.get("AbstractSource", ""),
+            "url": data.get("AbstractURL", ""),
+            "answer": data.get("Answer", ""),
+            "related_topics": topics,
+        }
+    except Exception as e:
+        return {"error": str(e), "query": query, "status": "unavailable"}
+
+
+# ---------------------------------------------------------------------------
+# Tool 2: Live weather via wttr.in (no API key required)
 # ---------------------------------------------------------------------------
 
 
@@ -38,7 +83,7 @@ def get_weather_data(location: str = "Ahmedabad") -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Tool 2: CricSentinel historical operations database
+# Tool 3: CricSentinel historical operations database
 # ---------------------------------------------------------------------------
 
 _DB: dict[str, Any] = {

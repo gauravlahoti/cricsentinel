@@ -1,0 +1,102 @@
+{
+  "eval_set_id": "cricsentinel_core",
+  "name": "CricSentinel Core Operations",
+  "description": "Validates @Agent_Orb responses across the full IPL match lifecycle — pre-match through super over. Checks phase awareness, operational soundness, and tool grounding.",
+  "eval_cases": [
+    {
+      "eval_id": "pre_match_status",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: n/a | Status: pre_match\nScore: 0/0 (0.0 ov)\nThreat: low | Driver: phase=n/a\nWeather: CLEAR · 32°C · NW @ 12km/h\nActive Alert: None\n\nOperator Query: Give me a status overview before gates open."}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {}}
+          ],
+          "reference": "The agent should confirm gate status, current threat level, and provide a brief pre-match ops summary. It should look up relevant historical or capacity data from the database."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "live_weather_check",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: middle | Status: live\nScore: 112/3 (13.4 ov)\nThreat: low | Driver: phase=middle\nWeather: CLOUDY · 26°C\nActive Alert: None\n\nOperator Query: What is the current weather in Ahmedabad? Any rain risk in the next hour?"}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "get_weather_data", "tool_input": {"location": "Ahmedabad"}}
+          ],
+          "reference": "The agent should call get_weather_data for Ahmedabad and report real temperature, humidity, wind speed, and whether precipitation is likely. It should not guess or fabricate weather data."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "gate_bottleneck_history",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: innings_break | Status: innings_break\nScore: 186/6 (20.0 ov)\nThreat: amber | Driver: concourse=gateE_bottleneck\nWeather: CLEAR · 28°C\nActive Alert: CROWDING on CAM_08 (GATE_E_CORRIDOR)\n\nOperator Query: How bad have Gate E bottlenecks been in previous IPL finals at NMS? What worked to resolve them?"}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {"query_type": "incident_history"}}
+          ],
+          "reference": "The agent should query the CricSentinel historical database for past Gate E incidents and provide resolution strategies that have been effective before, grounding its advice in historical data."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "egress_benchmark_lookup",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: n/a | Status: super_over\nScore: 186/6 (tie)\nThreat: elevated | Driver: super_over\nWeather: LIGHT DRIZZLE · 25°C\nActive Alert: None\n\nOperator Query: If we go to controlled egress immediately after the super over, what is the expected full evacuation time?"}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {"query_type": "egress_benchmarks"}}
+          ],
+          "reference": "The agent should look up egress benchmarks from the CricSentinel database, specifically for post-super-over or rain-hold scenarios, and give a concrete ETA estimate in minutes."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "capacity_zone_check",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: powerplay | Status: live\nScore: 48/1 (5.2 ov)\nThreat: low | Driver: phase=powerplay\nWeather: CLEAR · 30°C\nActive Alert: None\n\nOperator Query: How many fans can Gate E handle and which sections does it serve?"}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {"query_type": "capacity_zones"}}
+          ],
+          "reference": "The agent should query capacity_zones from the CricSentinel DB and return Gate E's max capacity figure and the sections it serves."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    }
+  ]
+}

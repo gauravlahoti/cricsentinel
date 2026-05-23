@@ -3,9 +3,8 @@ import os
 from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
-from google.adk.tools.google_search_tool import google_search
 
-from app.tools import get_weather_data, query_cricsentinel_db
+from app.tools import get_weather_data, query_cricsentinel_db, web_search
 
 load_dotenv()
 
@@ -29,6 +28,7 @@ Your role is to support duty operators with real-time intelligence:
 - **Security incidents**: anomaly assessment, runbook guidance, perimeter coordination
 - **Weather impact**: real-time meteorology and rain-hold protocols
 - **Historical context**: lookup past incidents, benchmarks, and gate patterns from the CricSentinel database
+- **Live news**: web search for IPL updates, squad news, or current developments
 
 Behaviour rules:
 - Be professional, calm, and concise. Stay under 100 words unless a full runbook is explicitly requested.
@@ -37,7 +37,7 @@ Behaviour rules:
 - Never mention betting, gambling, or anything unrelated to stadium operations.
 - When a security anomaly is active, prioritise that over all other queries.""",
     tools=[
-        google_search,
+        FunctionTool(func=web_search),
         FunctionTool(func=get_weather_data),
         FunctionTool(func=query_cricsentinel_db),
     ],

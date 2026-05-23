@@ -69,7 +69,7 @@ async function tryAdkAgent(payload: object): Promise<any | null> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(25_000),
     });
     if (!r.ok) return null;
     const data = await r.json() as any;

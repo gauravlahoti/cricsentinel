@@ -58,21 +58,22 @@ The agent runs as a standalone Python microservice (port 8000). The Express serv
 
 | Tool | Type | What it does |
 |---|---|---|
-| **`google_search`** | ADK Built-in (`google_search_tool`) | Grounds responses in live Google Search results — IPL news, squad updates, real-time context |
+| **`web_search`** | Custom `FunctionTool` (DuckDuckGo API) | Searches the web for IPL news, squad updates, and real-time context — no API key required |
 | **`get_weather_data`** | Custom `FunctionTool` | Fetches real-time weather for Ahmedabad via wttr.in (temp, humidity, wind, visibility) |
 | **`query_cricsentinel_db`** | Custom `FunctionTool` | Queries the CricSentinel historical operations database — gate patterns, incident history, capacity zones, egress benchmarks across IPL 2019–2025 |
 
-### `google_search` — ADK Grounding Tool
+### `web_search` — Custom Function Tool
 
-The `google_search` built-in is sourced from `google.adk.tools.google_search_tool` and uses Gemini's native Search Grounding capability. When the operator asks about live IPL news, squad changes, or anything beyond the local dataset, the agent automatically invokes this tool and cites sources inline.
+`web_search` uses the DuckDuckGo Instant Answer API — no API key, free to call. When the operator asks about live IPL news, squad changes, or anything outside the local dataset, the agent automatically invokes this tool and returns the abstract, source URL, and related topics.
 
 ```python
-from google.adk.tools.google_search_tool import google_search
+from google.adk.tools import FunctionTool
+from app.tools import web_search
 
 root_agent = Agent(
     name="cricsentinel_orb",
     model="gemini-2.5-flash",
-    tools=[google_search, ...],
+    tools=[FunctionTool(func=web_search), ...],
 )
 ```
 

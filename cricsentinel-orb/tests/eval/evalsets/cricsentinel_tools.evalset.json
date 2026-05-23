@@ -1,0 +1,64 @@
+{
+  "eval_set_id": "cricsentinel_tools",
+  "name": "CricSentinel Tool Invocation",
+  "description": "Verifies that @Agent_Orb calls the correct ADK tool for each query category — live weather, historical DB, and web search. Checks tool_trajectory_avg_score.",
+  "eval_cases": [
+    {
+      "eval_id": "tool_weather_invoked",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: death | Status: live\nScore: 164/5 (17.2 ov)\nThreat: amber | Driver: weather=squall\nWeather: RAIN LIKELY · 26°C · NE @ 24km/h\nActive Alert: None\n\nOperator Query: Check the live weather for Ahmedabad right now — temperature, wind, and precipitation probability."}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "get_weather_data", "tool_input": {"location": "Ahmedabad"}}
+          ],
+          "reference": "The agent must invoke get_weather_data with location=Ahmedabad and return real data including temperature in Celsius, wind speed in km/h, and weather description."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tool_db_gate_patterns_invoked",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: innings_break | Status: innings_break\nScore: 186/6 (20.0 ov)\nThreat: amber | Driver: concourse=gateE_bottleneck\nWeather: CLEAR\nActive Alert: CROWDING on CAM_08 (GATE_E_CORRIDOR)\n\nOperator Query: What are the historical fan-per-minute throughput figures for Gate E during innings break? I need the numbers."}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {"query_type": "gate_patterns"}}
+          ],
+          "reference": "The agent must call query_cricsentinel_db with query_type='gate_patterns' and return the Gate E throughput figure for innings_break phase (should be ~1180 fans/min)."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tool_db_incident_history_invoked",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "[STADIUM OPS STATE — IPL 2026 FINALE]\nPhase: middle | Status: live\nScore: 112/3 (13.4 ov)\nThreat: elevated | Driver: anomaly=cam14\nWeather: CLEAR · 29°C\nActive Alert: UNATTENDED on CAM_14 (SEC_312)\n\nOperator Query: Have there been unattended bag incidents at NMS in past IPL finals? How were they resolved?"}]
+          },
+          "expected_tool_use": [
+            {"tool_name": "query_cricsentinel_db", "tool_input": {"query_type": "incident_history"}}
+          ],
+          "reference": "The agent must call query_cricsentinel_db for incident_history filtered to UNATTENDED_ITEM type, and provide resolution approaches from past incidents."
+        }
+      ],
+      "session_input": {
+        "app_name": "cricsentinel",
+        "user_id": "eval_operator",
+        "state": {}
+      }
+    }
+  ]
+}
