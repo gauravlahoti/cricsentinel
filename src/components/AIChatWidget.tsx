@@ -187,7 +187,7 @@ export default function AIChatWidget({
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
-            className="w-[360px] md:w-[400px] h-[520px] bg-glass-surface rounded-2xl border border-glass-border/70 overflow-hidden shadow-2xl flex flex-col glow-cyan mb-3 select-none"
+            className="w-[360px] md:w-[400px] h-[520px] bg-[#0d0f17] backdrop-blur-xl rounded-2xl border border-glass-border/70 overflow-hidden shadow-2xl flex flex-col glow-cyan mb-3 select-none"
           >
             {/* Widget Elegant Header */}
             <div className="p-3 bg-glass-base flex justify-between items-center border-b border-glass-border/40">
@@ -245,7 +245,7 @@ export default function AIChatWidget({
             {/* Message Thread Panel */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-black/15 scroll-smooth"
+              className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-black/50 scroll-smooth"
             >
               {commsEntries.map((msg) => {
                 const isUser = msg.speaker === "ops_lead";

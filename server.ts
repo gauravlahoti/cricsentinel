@@ -1,15 +1,23 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type GenerateContentConfig } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || "3000", 10);
 
-app.use(express.json());
+// Security headers
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+app.use(express.json({ limit: "32kb" }));
 
 // Lazy-initialized GoogleGenAI client to avoid startup crash if API key is not configured
 let aiClient: GoogleGenAI | null = null;
@@ -26,7 +34,12 @@ function getGeminiClient(): GoogleGenAI {
     const location = process.env.GCP_LOCATION || process.env.GOOGLE_CLOUD_REGION;
     const projectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
 
-    const clientConfig: any = {
+    const clientConfig: {
+      apiKey: string;
+      httpOptions: { headers: Record<string, string> };
+      projectId?: string;
+      location?: string;
+    } = {
       apiKey: key,
       httpOptions: {
         headers: {
@@ -47,9 +60,56 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// ADK Python agent proxy — preferred AI backend
+const ADK_AGENT_URL = process.env.ADK_AGENT_URL || "http://localhost:8000";
+
+async function tryAdkAgent(payload: object): Promise<any | null> {
+  try {
+    const r = await fetch(`${ADK_AGENT_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!r.ok) return null;
+    const data = await r.json() as any;
+    return data?.success ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+// Simple in-memory rate limiter: max 30 requests per IP per minute
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    return false;
+  }
+  if (entry.count >= 30) return true;
+  entry.count++;
+  return false;
+}
+
 // REST route for live Agent Orb reasoning
 app.post("/api/agent-respond", async (req, res) => {
+  const clientIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+  if (isRateLimited(clientIp)) {
+    res.status(429).json({ success: false, error: "Too many requests. Please slow down." });
+    return;
+  }
+
   const { query, matchState, opsPosture, currentAnomaly } = req.body;
+
+  // Input validation
+  if (!query || typeof query !== "string") {
+    res.status(400).json({ success: false, error: "query is required and must be a string." });
+    return;
+  }
+  const sanitizedQuery = query.trim().slice(0, 500);
 
   const statePromptContext = `
 [CURRENT STADIUM OPERATIONS STATE]
@@ -70,6 +130,20 @@ Strictly avoid telemetry jargon-larping or any reference to betting, and never s
 Keep your answer short and focused, directly addressing the operator's query. Use markdown if helpful, but stay under 80 words.
   `.trim();
 
+  // 1. Try ADK Python agent (preferred)
+  const adkResult = await tryAdkAgent({
+    query: sanitizedQuery,
+    match_state: matchState || {},
+    ops_posture: opsPosture || {},
+    current_anomaly: currentAnomaly || null,
+    weather: req.body.weather || "CLEAR",
+  });
+  if (adkResult) {
+    res.json(adkResult);
+    return;
+  }
+
+  // 2. Fallback: direct Gemini call
   try {
     const ai = getGeminiClient();
     const prompt = `
@@ -77,18 +151,20 @@ Context of Operation Deck:
 ${statePromptContext}
 
 Operator Query or Event:
-"${query}"
+"${sanitizedQuery}"
 
 Provide your professional guidance:
     `.trim();
 
+    const genConfig: GenerateContentConfig = {
+      systemInstruction,
+      temperature: 0.7,
+    };
+
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: prompt,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
-      },
+      config: genConfig,
     });
 
     const replyText = response.text || "Operations standby. Analyzing signals...";
@@ -119,7 +195,7 @@ Provide your professional guidance:
       result_summary: "Status green. Ready for backup commands."
     };
 
-    const lowercaseQuery = (query || "").toLowerCase();
+    const lowercaseQuery = sanitizedQuery.toLowerCase();
     const lowerPhase = (matchState?.phase || "").toLowerCase();
 
     if (lowercaseQuery.includes("bag") || lowercaseQuery.includes("backpack") || lowercaseQuery.includes("anomaly") || opsPosture?.level === "elevated") {
