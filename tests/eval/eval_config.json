@@ -1,0 +1,10 @@
+{
+  "judge_model_options": {
+    "judge_model": "gemini-2.0-flash",
+    "temperature": 0.1,
+    "num_samples": 3
+  },
+  "server_url": "http://localhost:3000",
+  "request_timeout_ms": 15000,
+  "overall_pass_threshold": 0.85
+}

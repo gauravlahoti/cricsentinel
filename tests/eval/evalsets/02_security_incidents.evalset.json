@@ -1,0 +1,218 @@
+{
+  "eval_set_id": "02_security_incidents",
+  "name": "Security Incident Response",
+  "description": "Tests agent response quality for active security anomalies and elevated threat scenarios.",
+  "eval_cases": [
+    {
+      "eval_id": "unattended_backpack_cam14",
+      "description": "Active UNATTENDED anomaly on CAM_14 during middle overs at elevated threat",
+      "tags": ["security", "anomaly", "elevated"],
+      "request": {
+        "query": "CAM_14 anomaly flagged. Unattended backpack under seat row 12, Section 312. What's our response protocol?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "live",
+          "phase": "middle",
+          "score": { "runs": 112, "wickets": 3, "overs": "13.4" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T16:30:00Z"
+        },
+        "opsPosture": {
+          "level": "elevated",
+          "driver": "CCTV anomaly CAM_14 Section 312",
+          "since": "2026-05-23T16:28:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": {
+          "id": "anom-001",
+          "camera": "CAM_14",
+          "section": "SEC_312",
+          "kind": "UNATTENDED",
+          "bbox": [120, 340, 80, 60],
+          "confidence": 0.94,
+          "ts": "2026-05-23T16:28:30Z"
+        },
+        "weather": "CLEAR · 29°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response directly addresses the unattended backpack incident and provides a concrete response protocol — such as dispatching security stewards, establishing a perimeter, or staging evacuation.",
+          "threshold": 0.85
+        },
+        "context_grounding": {
+          "rubric": "The response references the specific anomaly context: CAM_14, Section 312, or the elevated threat posture — not a generic security template unaware of the live incident.",
+          "threshold": 0.8
+        },
+        "operational_soundness": {
+          "rubric": "The incident response guidance follows credible stadium security practice. It does not suggest immediate full evacuation as a first step, nor does it dismiss the anomaly without action.",
+          "threshold": 0.9
+        },
+        "professional_tone": {
+          "rubric": "The response is calm and authoritative — appropriate for a duty manager receiving a live security alert. It does not sensationalise or use alarming language.",
+          "threshold": 0.85
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "required_fields": ["success", "text", "tool_call"],
+        "success_must_be_true": true,
+        "tool_call_must_exist": true
+      }
+    },
+    {
+      "eval_id": "crowd_intrusion_section",
+      "description": "INTRUSION anomaly detected — crowd pushing beyond perimeter in a section",
+      "tags": ["security", "intrusion", "crowd"],
+      "request": {
+        "query": "Crowd intrusion flagged at Section 108 near the boundary rope. Stewards not visible. Immediate action?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 2,
+          "status": "live",
+          "phase": "death",
+          "score": { "runs": 175, "wickets": 7, "overs": "18.5" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T18:45:00Z"
+        },
+        "opsPosture": {
+          "level": "critical",
+          "driver": "Boundary intrusion SEC_108",
+          "since": "2026-05-23T18:43:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": {
+          "id": "anom-002",
+          "camera": "CAM_06",
+          "section": "SEC_108",
+          "kind": "INTRUSION",
+          "bbox": [200, 450, 150, 100],
+          "confidence": 0.97,
+          "ts": "2026-05-23T18:43:15Z"
+        },
+        "weather": "CLEAR · 27°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response gives immediate, actionable guidance for managing a live boundary intrusion event — steward dispatch, PA broadcast, or play halt coordination.",
+          "threshold": 0.85
+        },
+        "context_grounding": {
+          "rubric": "The response reflects the critical threat level and death-overs match context — it does not treat this as a low-priority situation.",
+          "threshold": 0.85
+        },
+        "operational_soundness": {
+          "rubric": "The recommended actions would credibly contain a boundary intrusion without causing a broader crowd panic. Actions are proportionate and orderly.",
+          "threshold": 0.9
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "security_posture_escalation",
+      "description": "Operator requests guidance on escalating security posture before super over",
+      "tags": ["security", "posture", "super_over"],
+      "request": {
+        "query": "Super Over just confirmed. How do we adjust security posture before the next ball?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 3,
+          "status": "super_over",
+          "phase": "death",
+          "score": { "runs": 186, "wickets": 10, "overs": "20.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T19:00:00Z"
+        },
+        "opsPosture": {
+          "level": "critical",
+          "driver": "Super Over — maximum crowd intensity",
+          "since": "2026-05-23T18:59:00Z",
+          "match_phase": "super_over"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 26°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response gives specific security posture adjustments for a Super Over scenario — not generic advice, but actionable steps like gate lock-down, steward redeployment, or PA readiness.",
+          "threshold": 0.8
+        },
+        "context_grounding": {
+          "rubric": "The response treats this as the highest-intensity moment of the event — Super Over, critical threat level — and responds proportionately.",
+          "threshold": 0.8
+        },
+        "safety_compliance": {
+          "rubric": "The response does not reference match outcome, betting, team allegiance, or crowd sentiment in a way that could inflame fan behaviour.",
+          "threshold": 1.0
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true,
+        "tool_call_must_exist": true
+      }
+    },
+    {
+      "eval_id": "post_match_egress_security",
+      "description": "Match ends — operator plans secure crowd dispersal",
+      "tags": ["post_match", "egress", "security"],
+      "request": {
+        "query": "Match complete. 130,000 patrons need to exit. Stage the controlled egress sequence.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 2,
+          "status": "done",
+          "phase": "n/a",
+          "score": { "runs": 189, "wickets": 7, "overs": "19.4" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T19:20:00Z"
+        },
+        "opsPosture": {
+          "level": "elevated",
+          "driver": "Post-match egress — crowd dispersal active",
+          "since": "2026-05-23T19:20:00Z",
+          "match_phase": "done"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 26°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response provides a concrete egress sequencing plan — phased gate openings, priority sections, PA broadcast staging, or steward positioning.",
+          "threshold": 0.8
+        },
+        "operational_soundness": {
+          "rubric": "The egress plan is operationally safe for 130,000 patrons — it avoids bottlenecks, staggers dispersal, and considers crowd flow dynamics.",
+          "threshold": 0.85
+        },
+        "anti_hallucination": {
+          "rubric": "The response does not fabricate specific gate capacity numbers, exact egress timings in minutes, or crowd density readings that were not in the provided context.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    }
+  ]
+}

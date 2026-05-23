@@ -1,0 +1,231 @@
+{
+  "eval_set_id": "05_response_quality",
+  "name": "Response Quality & Reliability",
+  "description": "Tests conciseness, schema reliability, anti-hallucination, and consistent response structure across diverse queries.",
+  "eval_cases": [
+    {
+      "eval_id": "conciseness_enforcement",
+      "description": "Complex multi-part query — agent must stay within 80-word limit",
+      "tags": ["quality", "conciseness"],
+      "request": {
+        "query": "Give me a full operational briefing: gate status, concourse density, anomaly risk, weather outlook, and recommended posture change.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "live",
+          "phase": "middle",
+          "score": { "runs": 98, "wickets": 2, "overs": "11.3" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T16:10:00Z"
+        },
+        "opsPosture": {
+          "level": "low",
+          "driver": "Nominal mid-innings",
+          "since": "2026-05-23T15:00:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 29°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "Despite the brevity constraint, the response addresses the most operationally critical items from the multi-part query — not just one item.",
+          "threshold": 0.75
+        },
+        "professional_tone": {
+          "rubric": "The response is in a structured, professional format appropriate for an operations briefing — not conversational or rambling.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "required_fields": ["success", "text", "tool_call"],
+        "success_must_be_true": true,
+        "tool_call_must_exist": true
+      }
+    },
+    {
+      "eval_id": "anti_hallucination_no_context_data",
+      "description": "Query asks for specific metrics not present in context — agent must not fabricate numbers",
+      "tags": ["quality", "anti_hallucination"],
+      "request": {
+        "query": "What is the exact crowd density per square metre in Block C right now?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "live",
+          "phase": "powerplay",
+          "score": { "runs": 55, "wickets": 1, "overs": "6.4" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T15:35:00Z"
+        },
+        "opsPosture": {
+          "level": "low",
+          "driver": "Nominal",
+          "since": "2026-05-23T15:00:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 30°C"
+      },
+      "criteria": {
+        "anti_hallucination": {
+          "rubric": "The response does NOT invent a specific crowd density figure (e.g., '4.2 persons/m²') for Block C — because this data was not in the provided context. It may acknowledge the data is not available or recommend consulting CCTV/sensors.",
+          "threshold": 0.85
+        },
+        "response_relevance": {
+          "rubric": "Even without fabricating data, the response is still helpful — it redirects to available data sources or acknowledges what it can and cannot access.",
+          "threshold": 0.7
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "schema_consistency_check",
+      "description": "Validates response schema is consistent and includes all required fields",
+      "tags": ["quality", "schema", "reliability"],
+      "request": {
+        "query": "Status check.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "live",
+          "phase": "powerplay",
+          "score": { "runs": 40, "wickets": 0, "overs": "4.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T15:10:00Z"
+        },
+        "opsPosture": {
+          "level": "low",
+          "driver": "Nominal powerplay",
+          "since": "2026-05-23T15:00:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 31°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response provides a meaningful operational status check — not an empty, placeholder, or error message.",
+          "threshold": 0.75
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 8000,
+        "required_fields": ["success", "text", "tool_call", "sender"],
+        "success_must_be_true": true,
+        "tool_call_must_exist": true
+      }
+    },
+    {
+      "eval_id": "multi_anomaly_triage",
+      "description": "Two simultaneous concerns — agent should triage and prioritise",
+      "tags": ["quality", "triage", "prioritisation"],
+      "request": {
+        "query": "We have both a Gate E bottleneck forming AND a CAM_09 bag anomaly. Which do we address first?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "innings_break",
+          "phase": "innings_break",
+          "score": { "runs": 186, "wickets": 6, "overs": "20.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T17:00:00Z"
+        },
+        "opsPosture": {
+          "level": "amber",
+          "driver": "Multiple simultaneous alerts",
+          "since": "2026-05-23T16:59:00Z",
+          "match_phase": "innings_break"
+        },
+        "currentAnomaly": {
+          "id": "anom-003",
+          "camera": "CAM_09",
+          "section": "SEC_205",
+          "kind": "UNATTENDED",
+          "bbox": [300, 200, 60, 45],
+          "confidence": 0.88,
+          "ts": "2026-05-23T16:58:00Z"
+        },
+        "weather": "CLEAR · 28°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response provides a clear triage decision — identifying which issue to address first and why, rather than treating both as equally urgent without guidance.",
+          "threshold": 0.85
+        },
+        "operational_soundness": {
+          "rubric": "The prioritisation decision is operationally sound — the bag anomaly (security risk) should typically take priority over a flow bottleneck, unless the bottleneck creates an immediate crush risk.",
+          "threshold": 0.8
+        },
+        "anti_hallucination": {
+          "rubric": "The response does not invent details about Gate E or CAM_09 beyond what was provided in context.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "latency_benchmark_simple_query",
+      "description": "Simple one-word query — validates sub-3s response time at baseline",
+      "tags": ["quality", "latency", "benchmark"],
+      "request": {
+        "query": "Ready?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "pre_match",
+          "phase": "n/a",
+          "score": { "runs": 0, "wickets": 0, "overs": "0.0" },
+          "data_complete": false,
+          "updated_at": "2026-05-23T14:00:00Z"
+        },
+        "opsPosture": {
+          "level": "low",
+          "driver": "Pre-match nominal",
+          "since": "2026-05-23T13:00:00Z",
+          "match_phase": "pre_match"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 32°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response is a meaningful operational confirmation or readiness status — not a confused non-answer.",
+          "threshold": 0.7
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 5000,
+        "success_must_be_true": true,
+        "required_fields": ["success", "text", "sender"]
+      }
+    }
+  ]
+}

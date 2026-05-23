@@ -1,0 +1,243 @@
+{
+  "eval_set_id": "03_phase_awareness",
+  "name": "Match Phase Contextual Awareness",
+  "description": "Verifies the agent adapts responses to the active match phase and produces phase-differentiated guidance.",
+  "eval_cases": [
+    {
+      "eval_id": "innings_break_bottleneck_prediction",
+      "description": "Innings break triggers peak concourse congestion — agent must predict and manage",
+      "tags": ["innings_break", "bottleneck", "crowd_flow"],
+      "request": {
+        "query": "Predict bottleneck risk at Gate E for the next 10 minutes.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "innings_break",
+          "phase": "innings_break",
+          "score": { "runs": 186, "wickets": 6, "overs": "20.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T17:00:00Z"
+        },
+        "opsPosture": {
+          "level": "amber",
+          "driver": "Innings break peak concourse flow",
+          "since": "2026-05-23T17:00:00Z",
+          "match_phase": "innings_break"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 28°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response directly addresses Gate E bottleneck risk during innings break, offering a prediction or mitigation recommendation.",
+          "threshold": 0.8
+        },
+        "context_grounding": {
+          "rubric": "The response reflects the innings break context — which is known to generate peak concourse movement — rather than treating this as a mid-play scenario.",
+          "threshold": 0.8
+        },
+        "operational_soundness": {
+          "rubric": "The bottleneck mitigation strategy is plausible — gate diversion, PA redirect, or steward deployment — rather than impractical or vague.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "pre_match_vs_death_overs_same_query",
+      "description": "Same crowd-risk query at pre-match should differ significantly from death overs response",
+      "tags": ["phase_differentiation", "pre_match", "regression"],
+      "request": {
+        "query": "Assess overall crowd risk right now.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 1,
+          "status": "pre_match",
+          "phase": "n/a",
+          "score": { "runs": 0, "wickets": 0, "overs": "0.0" },
+          "data_complete": false,
+          "updated_at": "2026-05-23T14:00:00Z"
+        },
+        "opsPosture": {
+          "level": "low",
+          "driver": "Pre-match nominal",
+          "since": "2026-05-23T13:00:00Z",
+          "match_phase": "pre_match"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 32°C"
+      },
+      "criteria": {
+        "context_grounding": {
+          "rubric": "The response reflects the pre-match low-risk context — low attendance, gates opening, nominal posture. It should not describe a high-intensity live match situation.",
+          "threshold": 0.8
+        },
+        "response_relevance": {
+          "rubric": "The response provides a meaningful crowd risk assessment appropriate for pre-match conditions — not a dismissal or completely generic filler.",
+          "threshold": 0.75
+        },
+        "professional_tone": {
+          "rubric": "The response is calm and proportionate to a low-threat pre-match scenario, not unnecessarily alarming.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "death_overs_crowd_risk_same_query",
+      "description": "Same crowd-risk query during death overs should reflect elevated intensity",
+      "tags": ["phase_differentiation", "death_overs", "regression"],
+      "request": {
+        "query": "Assess overall crowd risk right now.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 2,
+          "status": "live",
+          "phase": "death",
+          "score": { "runs": 178, "wickets": 6, "overs": "18.2" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T18:40:00Z"
+        },
+        "opsPosture": {
+          "level": "elevated",
+          "driver": "Death overs — match on knife-edge",
+          "since": "2026-05-23T18:00:00Z",
+          "match_phase": "live"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 27°C"
+      },
+      "criteria": {
+        "context_grounding": {
+          "rubric": "The response reflects the elevated threat level and death overs intensity — it should NOT mirror a calm pre-match assessment.",
+          "threshold": 0.8
+        },
+        "response_relevance": {
+          "rubric": "The response addresses crowd risk in the current high-intensity context with appropriate urgency and actionable guidance.",
+          "threshold": 0.8
+        },
+        "operational_soundness": {
+          "rubric": "The risk assessment guidance is proportionate to the scenario — not dismissive of the elevated posture.",
+          "threshold": 0.8
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    },
+    {
+      "eval_id": "strategic_timeout_pa_broadcast",
+      "description": "Strategic timeout — operator wants to use the break for PA safety messaging",
+      "tags": ["timeout", "pa_broadcast", "communication"],
+      "request": {
+        "query": "Strategic timeout called. Draft a PA script for calm crowd messaging.",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 2,
+          "status": "strategic_timeout",
+          "phase": "death",
+          "score": { "runs": 142, "wickets": 4, "overs": "15.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T18:05:00Z"
+        },
+        "opsPosture": {
+          "level": "elevated",
+          "driver": "Strategic timeout — crowd tension high",
+          "since": "2026-05-23T18:04:00Z",
+          "match_phase": "strategic_timeout"
+        },
+        "currentAnomaly": null,
+        "weather": "CLEAR · 28°C"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response produces a usable PA script draft or concrete guidance for crowd messaging during the timeout — not a refusal or meta-commentary about PA systems.",
+          "threshold": 0.8
+        },
+        "safety_compliance": {
+          "rubric": "The PA script content is neutral, safety-focused, and contains no references to team outcomes, betting, or language that could excite or agitate the crowd.",
+          "threshold": 1.0
+        },
+        "professional_tone": {
+          "rubric": "The PA script is calm, clear, and appropriate for public address to 130,000 people.",
+          "threshold": 0.85
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true,
+        "text_must_not_contain": ["bet", "odds", "wager"]
+      }
+    },
+    {
+      "eval_id": "rain_hold_shelter_activation",
+      "description": "Rain hold declared — agent must coordinate shelter and hold protocol",
+      "tags": ["rain_hold", "weather", "shelter"],
+      "request": {
+        "query": "Rain hold declared. How do we manage 130,000 patrons over a potential 45-minute delay?",
+        "matchState": {
+          "id": "nm-2026-rcb-mi",
+          "teams": { "home": "RCB", "away": "MI" },
+          "venue": "Narendra Modi Stadium",
+          "format": "T20",
+          "innings": 2,
+          "status": "rain_hold",
+          "phase": "middle",
+          "score": { "runs": 65, "wickets": 2, "overs": "8.0" },
+          "data_complete": true,
+          "updated_at": "2026-05-23T17:15:00Z"
+        },
+        "opsPosture": {
+          "level": "amber",
+          "driver": "Rain hold — active precipitation",
+          "since": "2026-05-23T17:14:00Z",
+          "match_phase": "rain_hold"
+        },
+        "currentAnomaly": null,
+        "weather": "RAINING · 24°C · Heavy · Lightning risk moderate"
+      },
+      "criteria": {
+        "response_relevance": {
+          "rubric": "The response provides specific guidance for managing a 45-minute rain delay — shelter routing, concourse management, PA cadence, or steward positioning.",
+          "threshold": 0.8
+        },
+        "context_grounding": {
+          "rubric": "The response acknowledges the rain hold status, amber threat level, and weather conditions — it does not treat this as a normal dry-weather operational query.",
+          "threshold": 0.8
+        },
+        "operational_soundness": {
+          "rubric": "The guidance keeps patrons safe and sheltered during a lightning-risk delay — no suggestions that would leave spectators exposed or create dangerous movement.",
+          "threshold": 0.9
+        }
+      },
+      "deterministic_checks": {
+        "max_word_count": 80,
+        "max_response_time_ms": 10000,
+        "success_must_be_true": true
+      }
+    }
+  ]
+}
